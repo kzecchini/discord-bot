@@ -128,3 +128,9 @@ dmypy.json
 
 # ignore data files
 data/
+
+# any mp3 files
+*.mp3
+
+# any sqlite dbs
+*.db
