@@ -134,3 +134,6 @@ data/
 
 # any sqlite dbs
 *.db
+
+#
+notebooks/
