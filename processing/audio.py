@@ -139,24 +139,3 @@ def split_video(fpath, start_time, end_time):
     new_path = fpath + "_{}_{}.{}".format(start_time, end_time, ext)
     sound.export(new_path, format=ext)
     return new_path
-
-
-def init_db():
-    conn = sqlite3.connect(os.path.join(DATA_PATH, 'discord.db'))
-    c = conn.cursor()
-    tables = c.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    tables = [r[0] for r in tables]
-    if 'voice_clips' not in tables:
-        logging.info("creating necessary tables")
-        c.execute('''CREATE TABLE voice_clips
-             (member_id integer PRIMARY KEY, voice_clips text)''')
-    else:
-        logging.info("db already exists!")
-    conn.commit()
-
-def get_current_clip(member_id, c):
-    row = c.execute('''select member_id, voice_clips from voice_clips where member_id = {}'''.format(member_id))
-    row = c.fetchone()
-    if row is None:
-        return row
-    return row[1]
