@@ -3,7 +3,7 @@ from discord import app_commands
 import os
 from dotenv import load_dotenv
 import logging
-from typing import List
+from typing import List, Optional
 
 
 # basic config as env vars
@@ -23,15 +23,19 @@ tree = app_commands.CommandTree(client)
 
 
 def setup_logging():
-    log_fmt = "%(asctime)s %(levelname)s %(filename)s %(funcName)s: %(message)s"
-    logging.basicConfig(format=log_fmt, level=logging.INFO)
+    # use default discord logger
     discord.utils.setup_logging(level=logging.INFO)
 
 
-@tree.command(name="join_voice_channel")
+@tree.command()
 async def join_voice_channel(interaction: discord.Interaction, channel: str):
-    # TODO: actual logic of connecting
-    await interaction.response.send_message(f"you want to connect to {channel}")
+    for voice_channel in interaction.guild.voice_channels:
+        if channel == voice_channel.name:
+            break
+    
+    await voice_channel.connect()
+
+    await interaction.response.send_message(f"Connected to {channel}!")
 
 
 @join_voice_channel.autocomplete('channel')
@@ -41,6 +45,60 @@ async def channel_autocomplete(interaction: discord.Interaction, current: str) -
         app_commands.Choice(name=channel.name, value=channel.name)
         for channel in channels if current.lower() in channel.name.lower()
     ]
+
+
+@tree.command()
+async def disconnect_from_voice(interaction: discord.Interaction):
+    voice_client = interaction.guild.voice_client
+    if voice_client is not None:
+        voice_channel_name = voice_client.channel.name
+        await voice_client.disconnect()
+        await interaction.response.send_message(f"Disconnected from {voice_channel_name}!")
+    else:
+        await interaction.response.send_message("Not connected to any channels in this server!")
+
+
+@tree.command()
+async def add_intro_clip(interaction: discord.Interaction, youtube_link: str, start_time: str, end_time: str, clip_name: Optional[str]):
+    # TODO: logic for downloading via youtube_dl and storing in db
+    # should be unique to guild + user + clip_name, limited at 5 clips per person
+    await interaction.response.send_message(f"Creating your intro clip! This might take a few minutes to start working")
+
+
+@tree.command()
+async def choose_intro_clip(interaction: discord.Interaction, clip_name: str):
+    # TODO
+    await interaction.response.send_message(f"Your intro clip is now {clip_name}")
+
+
+@choose_intro_clip.autocomplete("clip_name")
+async def clip_name_autocomplete(interaction: discord.Interaction, current: str):
+    # TODO: get clip names from db
+    all_clip_names = ['placeholder']
+    return [
+        app_commands.Choice(name=clip_name, value=clip_name) 
+        for clip_name in all_clip_names if current.lower() in clip_name.lower() 
+    ]
+
+@client.event
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+    if member.id == client.user.id:
+        return
+    
+    if before.channel == after.channel:
+        logging.warning("before and after channels the same - something is wrong")
+        return
+
+    for voice_client in client.voice_clients:
+        # when we hit the channel - process
+        if (voice_client.channel == after.channel):
+            vc = voice_client
+            if not voice_client.is_connected():
+                logging.info('voice_client not connected, connecting!')
+                vc = await voice_client.channel.connect()
+            # TODO: get and play clip
+            logging.info(f"Playing intro clip for user {member.name} in channel {after.channel.name}")
+            break
 
 
 @client.event
