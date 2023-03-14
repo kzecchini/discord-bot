@@ -12,6 +12,9 @@ BOT_TOKEN = os.getenv('BOT_TOKEN')
 APPLICATION_ID = os.getenv('APPLICATION_ID')
 DATA_PATH = os.getenv('DATA_PATH', './data')
 STATUS_NAME = os.getenv('STATUS_NAME', "just vibing")
+FIRESTORE_HOST = os.getenv('FIRESTORE_HOST', 'localhost')
+FIRESTORE_PORT = os.getenv('FIRESTORE_PORT', '8026')
+
 
 
 # TODO implement bot commands
