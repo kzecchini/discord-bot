@@ -1,18 +1,14 @@
-FROM python:3.7.3
+FROM python:3.10
 
 COPY ./requirements.txt ./requirements.txt
 
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# provide as secrets if necessary
+# for now we just include secrets in the container
 COPY ./.env ./.env
-COPY ./data ./data
 COPY ./app.py ./app.py
 COPY ./utils.py ./utils.py
-
-# need to update en-sentiment.xml file
-RUN cp ./data/en-sentiment.xml /usr/local/lib/python3.7/site-packages/textblob/en/en-sentiment.xml
 
 # install ffmpeg
 RUN apt-get -y update && \

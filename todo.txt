@@ -1,5 +1,4 @@
 - normalize volume
-- add multiple clips
 - deploy to cloud
 - update architecture diagram (we don't need to offload saving clips)
 - return interaction should include the clipped mp3 so the user can check
