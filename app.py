@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from typing import List
 
-from tempfile import TemporaryDirectory, NamedTemporaryFile
+from tempfile import TemporaryDirectory
 import ctypes.util
 
 from audio import download_and_process_clip

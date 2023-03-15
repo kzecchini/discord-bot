@@ -3,7 +3,6 @@ from pydub import AudioSegment
 import yt_dlp
 import re
 from copy import deepcopy
-from tempfile import TemporaryDirectory
 
 
 DEFAULT_DOWNLOAD_PATH = "./data/audio"
