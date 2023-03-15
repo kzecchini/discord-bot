@@ -2,17 +2,18 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import os
+import io
 from dotenv import load_dotenv
 import logging
 from gcloud.aio.storage import Storage
 from google.cloud import firestore
 
+from typing import List
+
 from tempfile import TemporaryDirectory
-from uuid import uuid4
+import ctypes.util
 
 from audio import download_and_process_clip
-
-
 
 
 # config
@@ -45,11 +46,11 @@ class AudioCog(commands.Cog):
         self._firestore_client = None
         self.bot = bot
     
-    def __del__(self):
-        if self._storage_client:
-            self._storage_client.close()
-        if self._firestore_client:
-            self._firestore_client.close()
+    # def __del__(self):
+    #     if self._storage_client:
+    #         self._storage_client.close()
+    #     if self._firestore_client:
+    #         self._firestore_client.close()
 
     @property
     def storage_client(self):
@@ -100,14 +101,14 @@ class AudioCog(commands.Cog):
         # should be unique user + clip_name, limited at 5 clips per person
         user_id = str(interaction.user.id)
         document_ref = self.firestore_client.collection(self.firestore_collection).document(user_id)
-        document = await document_ref.get(['audio_clips'])
-        audio_clips = document.to_dict().get('audio_clips')
+        # document = await document_ref.get(['audio_clips'])
+        # audio_clips = document.to_dict().get('audio_clips')
 
-        if audio_clips:
-            if not await self.clip_add_ok(interaction, audio_clips, clip_name):
-                return
+        # if audio_clips:
+        #     if not await self.clip_add_ok(interaction, audio_clips, clip_name):
+        #         return
         
-        await interaction.response.send_message(f"Adding and setting your new clip to be active! You can set old clips using /choose_intro_clip")
+        await interaction.response.send_message(f"Adding and setting your new clip to be active!")
         
         await self.process_user_clip(str(interaction.user.id), youtube_link, float(start_time), float(end_time), clip_name)
 
@@ -147,12 +148,12 @@ class AudioCog(commands.Cog):
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
         if member.id == self.bot.user.id:
             return
-        
-        if before.channel == after.channel:
-            logging.warning("before and after channels the same - something is wrong")
-            return
 
         for voice_client in bot.voice_clients:
+            if before.channel == after.channel:
+                logging.warning("before and after channels the same - something is wrong")
+                return
+            
             # when we hit the channel - process
             if (voice_client.channel == after.channel):
                 vc = voice_client
@@ -161,6 +162,21 @@ class AudioCog(commands.Cog):
                     vc = await voice_client.channel.connect()
                 # TODO: get and play clip
                 logging.info(f"Playing intro clip for user {member.name} in channel {after.channel.name}")
+                
+                doc_ref = self.firestore_client.collection(self.firestore_collection).document(str(member.id))
+                document = await doc_ref.get(['content_uri'])
+                content_uri = document.to_dict().get('content_uri')
+
+                if content_uri is None:
+                    return
+
+                # with TemporaryDirectory(dir='./') as tmpdirname:
+                    # TODO: in memory
+                tmpdirname = './'
+                tmp_file = f'{tmpdirname}/file.mp3'
+                await self.storage_client.download_to_filename(self.data_bucket, content_uri.split(self.data_bucket)[-1][1:], tmp_file)
+                audio_source = discord.FFmpegOpusAudio(tmp_file)
+                vc.play(audio_source)
                 break
 
 
@@ -181,25 +197,25 @@ class AudioCog(commands.Cog):
 
     async def update_user_audio(self, member_id: str, clip_name: str, content_uri: str):
         doc_ref = self.firestore_client.collection(self.firestore_collection).document(member_id)
-        document = await doc_ref.get(['audio_clips'])
-        audio_clips = document.to_dict().get('audio_clips')
+        # document = await doc_ref.get(['audio_clips'])
+        # audio_clips = document.to_dict().get('audio_clips')
 
         data = {
             "clip_name": clip_name,
             "content_uri": content_uri,
         }
         
-        if audio_clips is not None:
-            logging.info("audio clips found, updating array")
-            await doc_ref.update({'audio_clips': firestore.ArrayUnion([{"name": clip_name, "content_uri": content_uri}])})
+        # if audio_clips is not None:
+        #     logging.info("audio clips found, updating array")
+        #     await doc_ref.update({'audio_clips': firestore.ArrayUnion([{"name": clip_name, "content_uri": content_uri}])})
 
-        else:
-            logging.info("no audio clips found, creating new record")  
-            data['audio_clips']= [
-                {"name": clip_name, "content_uri": content_uri}
-            ]
+        # else:
+        #     logging.info("no audio clips found, creating new record")  
+        #     data['audio_clips']= [
+        #         {"name": clip_name, "content_uri": content_uri}
+        #     ]
         
-        await doc_ref.set(data, merge=True)
+        await doc_ref.set(data)
 
 
 @bot.listen()
@@ -207,6 +223,11 @@ async def on_ready():
     setup_logging()
     
     # check we can play audio
+    try:
+        discord.opus.load_opus(ctypes.util.find_library('opus'))
+    except:
+        logging.exception("something went wrong loading opus...")
+    
     logging.info("Opus status: {}".format(discord.opus.is_loaded()))
 
     # sync command tree
