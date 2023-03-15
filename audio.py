@@ -3,7 +3,10 @@ from pydub import AudioSegment
 import yt_dlp
 import re
 from copy import deepcopy
+from tempfile import TemporaryDirectory
 
+
+DEFAULT_DOWNLOAD_PATH = "./data/audio"
 
 # set youtube download globals
 YDL_OPTS = {
@@ -13,7 +16,7 @@ YDL_OPTS = {
         'preferredcodec': 'mp3',
         'preferredquality': '192',
     }],
-    'outtmpl': './data/audio/%(id)s.%(ext)s',
+
 }
 
 
@@ -60,38 +63,36 @@ def split_video(fpath, start_time, end_time=None):
     return new_path
 
 
-# TODO: yt-dlp has a bug with start_time currently, so we go off of end time, and postprocess to cut the extra put on start
-def download_and_process_clip(url: str, start_time_seconds: int, end_time_seconds: int):
-    download_clip(url, start_time_seconds, end_time_seconds)
-
+# TODO: yt-dlp has a bug with start_time currently, so we go off of end time, and postprocess to cut the extra out before actual starting time
+def download_and_process_clip(url: str, start_time_seconds: float, end_time_seconds: float, download_path=DEFAULT_DOWNLOAD_PATH):
+    download_clip(url, start_time_seconds, end_time_seconds, download_path=download_path)
     video_id = get_video_id(url)
-
-    fpath = f'./data/audio/{video_id}.mp3'
-
+    fpath = f'{download_path}/{video_id}.mp3'
     clip_start_time = (start_time_seconds - end_time_seconds)*1000
+    return split_video(fpath, start_time=clip_start_time)
 
-    split_video(fpath, start_time=clip_start_time)
 
-
-def download_clip(url: str, start_time_seconds: int, end_time_seconds: int):
+def download_clip(url: str, start_time_seconds: float, end_time_seconds: float, download_path: str = DEFAULT_DOWNLOAD_PATH):
     # seems to be about 10 seconds off, minimum 15 second chunk
 
     def download_ranges(info_dict, ydl):
          return [{'start_time': start_time_seconds, 'end_time': end_time_seconds}]
     
     ydl_opts = deepcopy(YDL_OPTS)
+    ydl_opts['outtmpl'] = os.path.join(download_path, '%(id)s.%(ext)s')
+
     ydl_opts['download_ranges'] = download_ranges
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
-    
 
 
 if __name__ == "__main__":
-    url = "https://www.youtube.com/watch?v=SBPvlxKrtpU"
+    # url = "https://www.youtube.com/watch?v=SBPvlxKrtpU"
     # url = "https://www.youtube.com/watch?v=PS3nii58Q1w"
+    url = "https://www.youtube.com/watch?v=mR3Plv8HuNk"
 
-    start = 60*16 + 43
-    end = 60*16 + 44
+    start = 58
+    end = 62.5
 
-    download_and_process_clip(url, start, end)
+    download_and_process_clip(url, start, end, download_path="./data/test")
