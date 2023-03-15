@@ -1,0 +1,5 @@
+- normalize volume
+- add multiple clips
+- deploy to cloud
+- update architecture diagram (we don't need to offload saving clips)
+- add dynamic running of clips that are saved (not only on entry)
