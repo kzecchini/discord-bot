@@ -4,12 +4,8 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 import logging
-from typing import List, Optional
-from cachetools import cached, TTLCache
 from gcloud.aio.storage import Storage
 from google.cloud import firestore
-
-from util import process_user_clip
 
 from tempfile import TemporaryDirectory
 from uuid import uuid4
