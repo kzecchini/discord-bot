@@ -1,5 +1,4 @@
 - github action
 - normalize volume
-- deploy to cloud
-- update architecture diagram (we don't need to offload saving clips)
-- return interaction should include the clipped mp3 so the user can check
+- when setting clip, should return mp3 back to user to check it
+- create/update diagram
