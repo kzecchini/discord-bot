@@ -3,3 +3,4 @@
 - deploy to cloud
 - update architecture diagram (we don't need to offload saving clips)
 - add dynamic running of clips that are saved (not only on entry)
+- remove gcloud and store in firestore (we don't need that much storage, it should be <1gb for use with friends)
