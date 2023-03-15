@@ -19,7 +19,6 @@ YDL_OPTS = {
 
 }
 
-
 def get_video_id(url):
     video_id = None
     pattern = "^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#\&\?]*).*"
@@ -88,11 +87,11 @@ def download_clip(url: str, start_time_seconds: float, end_time_seconds: float, 
 
 
 if __name__ == "__main__":
-    # url = "https://www.youtube.com/watch?v=SBPvlxKrtpU"
+    url = "https://www.youtube.com/watch?v=SBPvlxKrtpU"
     # url = "https://www.youtube.com/watch?v=PS3nii58Q1w"
-    url = "https://www.youtube.com/watch?v=mR3Plv8HuNk"
+    # url = "https://www.youtube.com/watch?v=mR3Plv8HuNk"
 
-    start = 58
-    end = 62.5
+    start = 15*60 + 19
+    end = 15*60 + 21
 
     download_and_process_clip(url, start, end, download_path="./data/test")

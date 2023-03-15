@@ -2,15 +2,15 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import os
-import io
 from dotenv import load_dotenv
 import logging
 from gcloud.aio.storage import Storage
 from google.cloud import firestore
+from uuid import uuid4
 
 from typing import List
 
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 import ctypes.util
 
 from audio import download_and_process_clip
@@ -38,13 +38,18 @@ def setup_logging():
 
 
 class AudioCog(commands.Cog):
-    def __init__(self, bot, data_bucket, firestore_project_id, firestore_collection):
+    def __init__(self, bot, data_bucket, firestore_project_id, firestore_collection, tmp_cache='./data/cache'):
+        # tmp dirs don't work with FFmpeg for some reason... need to manage ourselves
+        self.tmp_cache_dir = tmp_cache
         self.firestore_project_id = firestore_project_id
         self.firestore_collection = firestore_collection
         self.data_bucket = data_bucket
         self._storage_client = None
         self._firestore_client = None
         self.bot = bot
+        
+        os.makedirs(self.tmp_cache_dir, exist_ok=True)
+
     
     # def __del__(self):
     #     if self._storage_client:
@@ -170,12 +175,10 @@ class AudioCog(commands.Cog):
                 if content_uri is None:
                     return
 
-                # with TemporaryDirectory(dir='./') as tmpdirname:
-                    # TODO: in memory
-                tmpdirname = './'
-                tmp_file = f'{tmpdirname}/file.mp3'
-                await self.storage_client.download_to_filename(self.data_bucket, content_uri.split(self.data_bucket)[-1][1:], tmp_file)
-                audio_source = discord.FFmpegOpusAudio(tmp_file)
+                # tmp dirs don't work with vc.play for some reason (async play vs. delete?)... need to manage ourselves and delete after the function
+                fname = os.path.join(self.tmp_cache_dir, str(uuid4()))
+                await self.storage_client.download_to_filename(self.data_bucket, content_uri.split(self.data_bucket)[-1][1:], fname)
+                audio_source = discord.FFmpegOpusAudio(fname)
                 vc.play(audio_source)
                 break
 
