@@ -1,0 +1,4 @@
+- github action
+- normalize volume
+- when setting clip, should return mp3 back to user to check it
+- create/update diagram

@@ -1,22 +1,14 @@
-# Discord Bot
+# Entry Voice Clip Bot
 
-A basic discord bot designed to have some fun with friends. 
+A basic discord bot designed to have some fun with friends.
 
-Utilizes garflied comics data scraped from previous machine learning reverse image search project.
+Store and play audio clips from youtube! Set a clip to play automatically when you join a voice call.
 
-### Commands:
-```
-!join 
-- join voice channel you are connected to
+More documentation on commands to come...
 
-!garfield 
-- display a random garfield comic
+## Todo
+- github action
+- normalize volume
+- when setting clip, should return mp3 back to user to check it
+- create/update diagram
 
-!clip <youtube_url> <start_time> <end_time> 
-- update the voice clip to play when you join voice channel where the bot is present
-- example: !clip https://www.youtube.com/watch?v=Pmf1TWwXrz4 1:39 1:43
-```
-
-### Passive checks:
-- Will play a short mp3 file when a user joins a voice channel the bot is currently on. If a user has not called the `!clip` command, one of the default voice clips will play.
-- Analyzes sentiment of messages containing my friend's favorite characters and responds based on the sentiment.
