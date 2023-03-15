@@ -3,6 +3,7 @@ from pydub import AudioSegment
 import yt_dlp
 import re
 from copy import deepcopy
+from typing import Optional
 
 
 DEFAULT_DOWNLOAD_PATH = "./data/audio"
@@ -26,33 +27,21 @@ def get_video_id(url):
         video_id = m[2]
     return video_id
 
-def detect_leading_silence(sound, silence_threshold=-50.0, chunk_size=10):
-    trim_ms = 0
-    assert chunk_size
-    while sound[trim_ms:trim_ms+chunk_size].dBFS < silence_threshold and trim_ms < len(sound):
-        trim_ms += chunk_size
-    return trim_ms
 
-def standardize_silence(sound, silence_len=250, silence_threshold=-50.0, chunk_size=10):
-    # first remove silence
-    start_trim = detect_leading_silence(sound, silence_threshold=silence_threshold, chunk_size=chunk_size)
-    end_trim = detect_leading_silence(sound.reverse())
-    duration = len(sound)    
-    trimmed_sound = sound[start_trim:duration-end_trim]
-
+def standardize_silence(sound, silence_len=150):
     # add standard silence len
     silence = AudioSegment.silent(duration=silence_len) # or be explicit
-    trimmed_sound = silence + trimmed_sound + silence
-    return trimmed_sound
+    sound = silence + sound + silence
+    return sound
 
 
-def split_video(fpath, start_time, end_time=None):
+def split_video(fpath: str, start_time: float, end_time: Optional[float] = None):
     sound = AudioSegment.from_mp3(fpath)
-    if end_time:
-        sound_range = sound[start_time:end_time]
-    else:
-        sound_range = sound[start_time:]
-    sound = standardize_silence(sound_range)
+    if abs(start_time) < len(sound):
+        sound = sound[start_time:]
+    if end_time is not None:
+        sound = sound[:end_time]
+    sound = standardize_silence(sound)
     split_path = os.path.split(fpath)
     fname, ext = split_path[-1].split(".")
     fpath = os.path.join(split_path[0], fname)
@@ -90,7 +79,7 @@ if __name__ == "__main__":
     # url = "https://www.youtube.com/watch?v=PS3nii58Q1w"
     # url = "https://www.youtube.com/watch?v=mR3Plv8HuNk"
 
-    start = 15*60 + 19
-    end = 15*60 + 21
+    start = 1
+    end = 4
 
     download_and_process_clip(url, start, end, download_path="./data/test")
