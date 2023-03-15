@@ -1,3 +1,4 @@
+- github action
 - normalize volume
 - deploy to cloud
 - update architecture diagram (we don't need to offload saving clips)

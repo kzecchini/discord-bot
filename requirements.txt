@@ -1,4 +1,6 @@
 discord.py[voice]==2.2.2
 pydub==0.25.1
 python-dotenv==1.0.0
-yt-dlp-2023.3.4
+yt-dlp==2023.3.4
+google-cloud-firestore==2.10.0
+gcloud-aio-storage==8.0.0

@@ -8,11 +8,10 @@ RUN pip install --upgrade pip && \
 # for now we just include secrets in the container
 COPY ./.env ./.env
 COPY ./app.py ./app.py
-COPY ./utils.py ./utils.py
+COPY ./audio.py ./audio.py
 
 # install ffmpeg
 RUN apt-get -y update && \
-    apt-get -y install software-properties-common && \
-    apt-get -y install ffmpeg
+    apt-get -y install software-properties-common ffmpeg opus-tools
 
 ENTRYPOINT [ "python", "app.py" ]
