@@ -4,3 +4,4 @@
 - update architecture diagram (we don't need to offload saving clips)
 - add dynamic running of clips that are saved (not only on entry)
 - return interaction should include the clipped mp3 so the user can check
+- remove gcloud and store in firestore (we don't need that much storage, it should be <1gb for use with friends)
