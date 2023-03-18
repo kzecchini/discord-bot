@@ -312,7 +312,10 @@ class AudioCog(commands.Cog):
     async def update_user_audio(self, member_id: str, clip_name: str, content_uri: str):
         doc_ref = self.col_ref.document(member_id)
         document = await doc_ref.get(['audio_clips'])
-        audio_clips = document.to_dict().get('audio_clips')
+        if not document.exists:
+            audio_clips = []
+        else:
+            audio_clips = document.to_dict().get('audio_clips', [])
         
         data = {
             "clip_name": clip_name,
