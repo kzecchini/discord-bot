@@ -1,5 +1,9 @@
 FROM python:3.10-slim
 
+# install ffmpeg
+RUN apt-get -y update && \
+    apt-get -y install software-properties-common ffmpeg opus-tools
+
 COPY ./requirements.txt ./requirements.txt
 
 RUN pip install --upgrade pip && \
@@ -9,9 +13,5 @@ RUN pip install --upgrade pip && \
 COPY ./.env ./.env
 COPY ./app.py ./app.py
 COPY ./audio.py ./audio.py
-
-# install ffmpeg
-RUN apt-get -y update && \
-    apt-get -y install software-properties-common ffmpeg opus-tools
 
 ENTRYPOINT [ "python", "app.py" ]

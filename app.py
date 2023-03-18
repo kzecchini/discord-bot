@@ -97,7 +97,10 @@ class AudioCog(commands.Cog):
     async def get_all_clips(self, user_id: str):
         document_ref = self.col_ref.document(user_id)
         doc = await document_ref.get(['audio_clips'])
-        audio_clips = doc.to_dict().get('audio_clips', [])
+        if doc.exists:
+            audio_clips = doc.to_dict().get('audio_clips', [])
+        else:
+            audio_clips = []
         return audio_clips
 
     @app_commands.command()
@@ -249,20 +252,18 @@ class AudioCog(commands.Cog):
         if member.id == self.bot.user.id:
             return
         
-        # this needs to be outside the loop or else there's an issue with deleting/playing the audio
+        if before.channel == after.channel:
+            logging.warning("before and after channels the same - something is wrong")
+            return
+
 
         for voice_client in self.bot.voice_clients:
-            if before.channel == after.channel:
-                logging.warning("before and after channels the same - something is wrong")
-                return
-            
             # when we hit the channel - process
-            if (voice_client.channel == after.channel):
-                vc = voice_client
+            if voice_client.channel == after.channel:
                 if not voice_client.is_connected():
                     logging.info('voice_client not connected, connecting!')
-                    vc = await voice_client.channel.connect()
-                # TODO: get and play clip
+                    voice_client = await voice_client.channel.connect()
+
                 logging.info(f"Playing intro clip for user {member.name} in channel {after.channel.name}")
                 
                 doc_ref = self.col_ref.document(str(member.id))
@@ -272,12 +273,13 @@ class AudioCog(commands.Cog):
                 if content_uri is None:
                     return
                 
-                await self._play_content(vc, content_uri)
+                await self._play_content(voice_client, content_uri)
                 
                 return
 
 
     async def _play_content(self, vc: discord.VoiceClient, content_uri: str):
+        # have to handle files this way due to async ffmpeg call
         fname = os.path.join(self.tmp_cache_dir, str(uuid4()))
         await self.storage_client.download_to_filename(self.data_bucket, content_uri.split(self.data_bucket)[-1][1:], fname)
 
